@@ -1,0 +1,49 @@
+package note;
+
+import java.io.FileReader;
+import java.io.FileWriter;
+
+public class File {
+	File(){}
+
+	public void Save(String path){		
+		
+	}
+	// 저장
+	public static void save(String f_name, String temp){	
+	
+		FileWriter file_w = null;
+		try{
+			// 저장할 파일 경로
+			file_w = new FileWriter(f_name);
+			// 파일 안에 내용을 저장
+			file_w.write(temp);
+			file_w.close();
+		}
+		catch(Exception e){
+			System.out.println(e.toString());
+		}
+	}
+	// 불러오기
+	public static String open(String f_name){		
+		FileReader file_r = null;
+		int inputValue = 0;
+		StringBuffer str = new StringBuffer();
+		try{
+			//f_name 파일경로 정보가 담겨져있음
+			file_r = new FileReader(f_name);
+			// 파일안에 내용이 끝날 때 까지 읽음
+			while((inputValue = file_r.read()) != -1){
+				// TextArea에 추가함
+				str.append((char)inputValue);				
+			}
+			file_r.close();
+			return str.toString();
+			
+		}catch(Exception e){
+			System.out.println(e.toString());
+		}
+		
+		return "fail";
+	}
+}
