@@ -1,0 +1,329 @@
+package note;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.io.FileInputStream;
+import java.io.IOException;
+
+import javax.print.Doc;
+import javax.print.DocFlavor;
+import javax.print.DocPrintJob;
+import javax.print.PrintService;
+import javax.print.PrintServiceLookup;
+import javax.print.ServiceUI;
+import javax.print.SimpleDoc;
+import javax.print.attribute.DocAttributeSet;
+import javax.print.attribute.HashDocAttributeSet;
+import javax.print.attribute.HashPrintRequestAttributeSet;
+import javax.print.attribute.PrintRequestAttributeSet;
+import javax.swing.ImageIcon;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.JTextPane;
+import javax.swing.KeyStroke;
+import javax.swing.ScrollPaneConstants;
+import javax.swing.SwingUtilities;
+import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.undo.UndoManager;
+
+
+
+	
+class Menu extends JFrame implements ActionListener {
+		private String file_name = "new 1";
+		public JTextArea jta;
+		//private JScrollPane scroll;
+		private String path = ""; // 저장 경로
+		private boolean text_change = true; // 내용 수정 체크(아직 미구현)
+		public int num = 1;
+		JMenuBar jmb = null;	 //메뉴바
+		
+		
+		private JTextPane  txtPane;
+		
+		
+		public void Jmemo()  {
+			  setTitle("메모장");
+			   Menu();  
+			  setBounds(100,100,500,500);
+			  setVisible(true);
+			 }
+			
+		
+		private void Menu(){
+			jta = new JTextArea(10,30);
+		    //jta.setEditable(true);
+			jmb = new JMenuBar();
+			JMenu menu1 = new JMenu("파일");
+			JMenu menu2 = new JMenu("편집");
+			JMenu menu3 = new JMenu("서식");
+			
+			this.add(jta);//textArea 추가
+			
+			//JMenu menu4 = new JMenu("도움말");
+			
+			// Menu1(파일) 하위 메뉴-----------------------------------------------------------------------
+			JMenuItem jmi = new JMenuItem("새로 만들기");
+			jmi.addActionListener(this);
+			jmi.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N,
+					ActionEvent.CTRL_MASK)); //메뉴아이템 단축기 추가 ctrl+n
+			menu1.add(jmi);
+
+			jmi = new JMenuItem("열기");
+			jmi.addActionListener(this);
+			jmi.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O,
+					ActionEvent.CTRL_MASK)); //메뉴아이템 단축기 추가 ctrl+o
+			menu1.add(jmi);
+
+			jmi = new JMenuItem("저장");
+			jmi.addActionListener(this);
+			jmi.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S,
+					ActionEvent.CTRL_MASK)); //메뉴아이템 단축기 추가 ctrl+s
+			menu1.add(jmi);
+
+			jmi = new JMenuItem("다른 이름으로 저장");
+			jmi.addActionListener(this);
+			menu1.add(jmi);
+			menu1.addSeparator();
+
+			jmi = new JMenuItem("인쇄");
+			jmi.addActionListener(this);
+			jmi.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_P,
+					ActionEvent.CTRL_MASK)); //메뉴아이템 단축기 추가 ctrl+p
+			menu1.add(jmi);
+
+			menu1.addSeparator();
+			jmi = new JMenuItem("끝내기");
+			jmi.addActionListener(this);
+			jmi.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_X,
+					ActionEvent.ALT_MASK));
+			menu1.add(jmi);
+
+			jmb.add(menu1);
+			setJMenuBar(jmb);
+			
+			//-----------------------------------------------------------------------------
+			
+			// Menu2(편집) 하위 메뉴-----------------------------------------------------------------------
+
+			jmb.add(menu2);
+			
+			JMenuItem jmi2 = new JMenuItem("");
+			jmi2.addActionListener(this);
+			menu2.add(jmi2);
+			
+			//-----------------------------------------------------------------------------
+
+		}//Menu()
+		
+		
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				switch (e.getActionCommand()) {
+				// 메뉴1 파일 메뉴
+				case "새로 만들기":
+					if (text_change) { // 수정이 안됬으면
+						this.new_page();
+					} else { // 수정이 됬을시
+						int i = this.save_check();
+						if (i == 0) {
+							this.save();
+						} else if (i == 1) {
+							this.new_page();
+						}
+					}
+					break;
+				case "열기":
+					if (text_change) { // 수정이 안됬으면
+						this.open();
+					} else { // 수정이 되을시
+						int i = this.save_check();
+						if (i == 0) {
+							this.save();
+						} else if (i == 1) {
+							this.open();
+						}
+					}
+					break;
+				case "저장":
+					if (path == "") {
+						this.save(); //저장메소드 호출
+						text_change = true;
+					} else {
+						// 바로 저장 메소드 호출
+						File.save(path, jta.getText());
+						text_change = true;
+					}
+
+					break;
+				case "다른 이름으로 저장":
+					this.save();
+					break;
+				case "인쇄":
+					this.print();
+					break;
+				case "끝내기":
+					this.exit();
+					break;
+				}
+			}
+			
+			
+			public void new_page() {
+				jta.setText(""); 	 // TextArea 초기화
+				path = ""; 			 // 저장경로 초기화
+				file_name = "제목없음"; // 파일 이름 초기화
+				setTitle(" 메모장");   // 타이틀 초기화
+			}//new_page()
+			
+			public void save() {
+
+				// 처음  파일 경로
+				JFileChooser file_save = new JFileChooser("c:\\");
+				// 파일 확장자
+				file_save.setFileFilter(new FileNameExtensionFilter("txt", "txt"));
+				// 여러개 선택 못함
+				file_save.setMultiSelectionEnabled(false);
+				// 파일을 선택했을 때 choice_s로 선택했는지 취소했는지 리턴값
+				int choice_s = file_save.showOpenDialog(this);
+				// 파일을 선택 했을 때
+				if (choice_s == JFileChooser.APPROVE_OPTION) {
+					// 파일 경로
+					String filepath = file_save.getSelectedFile().getAbsolutePath();
+					// 확장자가 txt가 아니면 입력해주기
+					if (!filepath.endsWith(".txt"))
+						filepath += ".txt";
+
+					// File의 save 메소드 호출
+					File.save(filepath, jta.getText());
+					// 파일 이름
+					file_name = file_save.getSelectedFile().getName();
+					// 타이틀에 파일이름 입력
+					setTitle(file_name);
+					// 자동 저장 경로에 파일 경로 입력
+					path = filepath;
+				}
+			}//save()
+
+			public void open() {
+				// 처음 파일 경로
+				JFileChooser file_open = new JFileChooser("c:\\");
+				// 확장자 정함
+				file_open.setFileFilter(new FileNameExtensionFilter("txt", "txt"));
+				// 여러개 선택 못함
+				file_open.setMultiSelectionEnabled(false);
+
+				int choice_o = file_open.showOpenDialog(this);
+
+				// 파일을 선택 했을 때
+				if (choice_o == JFileChooser.APPROVE_OPTION) {
+					// File의 Open 메소드 호출
+					String str = File.open(file_open.getSelectedFile()
+							.getAbsolutePath());
+					// TextArea 초기화
+					jta.setText("");
+					// 내용 추가
+					jta.append(str);
+					file_name = file_open.getSelectedFile().getName();
+					setTitle(file_name);
+					path = file_open.getSelectedFile().getAbsolutePath();
+				}
+			}//open
+
+			public void print() {
+				// 프린트 작업 객체
+				PrintRequestAttributeSet pras = new HashPrintRequestAttributeSet();
+				// 인쇄 속성 설정하기
+				// DocFlavor flavor = DocFlavor.INPUT_STREAM.PDF;
+				DocFlavor flavor = DocFlavor.INPUT_STREAM.AUTOSENSE;
+				// 특정 문서 유형(gif,png,pdf 등)
+				PrintService printService[] = PrintServiceLookup.lookupPrintServices(
+						flavor, pras);
+				// 기본 프린터 반환
+				PrintService defaultService = PrintServiceLookup
+						.lookupDefaultPrintService();
+				// 위에 속성들 입력 받음
+				PrintService service = ServiceUI.printDialog(null, 200, 200,
+						printService, defaultService, flavor, pras);
+
+				if (service != null) {
+					try {
+						// 위에 저장된 정보들 받음
+						DocPrintJob job = service.createPrintJob();
+						// 인쇄할 파일 가져옴
+						FileInputStream fis = new FileInputStream(file_name);
+						DocAttributeSet das = new HashDocAttributeSet();
+						Doc doc = new SimpleDoc(fis, flavor, das);
+						// 인쇄!
+						job.print(doc, pras);
+						if (fis != null)
+							fis.close();
+
+					} catch (Exception e) {
+						System.out.println(e.toString());
+					}
+				}
+			}//print()
+			
+			public void exit() {
+				if (text_change) { // 수정한 부분이 없으면
+					System.exit(0);
+				} else { // 수정이 되었으면
+					int i = this.save_check();
+					if (i == 0) {
+						this.save();
+					} else if (i == 1) {
+						System.exit(0);
+					}
+				}
+			}//exit()
+
+			// 파일이 변경 되었는지 체크 함
+			public int save_check() {
+				int i = JOptionPane.showConfirmDialog(null, file_name
+						+ " 파일의 내용이 변경되었습니다.\n변경된 내용을 저장하시겠습니까?", "메모장",
+						JOptionPane.YES_NO_CANCEL_OPTION,
+						JOptionPane.INFORMATION_MESSAGE);
+
+				return i;
+			}//save_check
+			
+			/*
+			private void updateThisSwingSet() {
+				JFrame frame = getFrame();
+				if (frame == null) {
+					SwingUtilities.updateComponentTreeUI(this);
+				} else {
+					SwingUtilities.updateComponentTreeUI(frame);
+				}
+			}
+			
+			public JFrame getFrame() {
+				return frame;
+			}
+			*/
+			
+}
+	
+	
+public class NotePad {
+	public static void main(String[] args) {
+		//JFrame.setDefaultLookAndFeelDecorated(true);
+		Menu jm = new Menu();
+		jm.Jmemo();
+	}
+
+}
